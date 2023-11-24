@@ -13,9 +13,9 @@ This is project 4 of of the General Assembly Data Science Immersive course, Proj
 
 ## Problem statement
 
-West Nile Virus is a deadly virus found in mosquitos. One it is infected to human, 20% of people develop symtoms ranging from a persistent fever, to serious neurological illnesses that can result in death. City of chicago and CDPH together want to control the spread of mosquitos, hence control the spread of West Nile Virus.
+West Nile Virus is a deadly virus transmitted by mosquitoes. Once it infects humans, 20% of individuals may develop symptoms, ranging from a persistent fever to severe neurological illnesses that can lead to death. The City of Chicago and the Chicago Department of Public Health (CDPH) have joined forces to control the spread of mosquitoes and, consequently, the spread of the West Nile Virus.
 
-Our team, as the amature data scientist group, we enter the competition hosted by City of Chicago to develop the model to predict the occurence of virus, so the City of Chicago can use them when they want to plan pesticides spraying as well as the cost-benefit analysis to justify the spraying plan. The result will be presented to members of CDC, including biostatistician and epidemiologists.
+Our team, consisting of amateur data scientists, has entered a competition hosted by the City of Chicago. Our goal is to develop a predictive model for the occurrence of the virus. This model will assist the City of Chicago in planning pesticide spraying operations and conducting cost-benefit analyses to justify their spraying plans. The results will be presented to members of the Centers for Disease Control and Prevention (CDC), including biostatisticians and epidemiologists.
 
 ## The Data
 
@@ -141,23 +141,23 @@ We do the calculation to find the distance (in kilometer) from the spray lat/lon
 
 
 ##### Summary of EDA
-- The correlation between features and WnvPresent are minimal. Most of correlation found are amoung each weather features.
-- It is clear that Virus is likely to be found during Jun - Oct. The highest is Aug. 
-- This is also matched the information of temperature where Virus is likely to be found
-- It is unclear to relate geolocation such Block to the present of virus.
-- In train data, the baseline score is 5% WnvPresent and 95% not present. This is very unbalance train data
-
-The only strong indicators are weather, so let's select features heavily rely on weather features
+- In train data, the baseline score is 5% Present (virus found) and 95% Non-present (virus not found). This is very unbalance train data
+- The correlation between most individual features and WnvPresent are quite minimal. 
+- The strong predictors are weather related feaatures, so let's select features heavily rely on weather features
+- Geolocation such as Trap, Block, Address, Street, lat/long correlation to WnvPresent is unclear.
+- The Virus is likely to be found during Jun - Oct. The highest is Aug. 
+- The virus is likely to be found in the higher temperature
 
 ##### Data preparation for model development
-- Address and street address are duplicate to the lat/long and even block/trap, so consider to drop them
-- Some feature with text present such spicies and traps are not number, so use hotcoded to convert them to number so the model can work with these features
-- now we have 36 features (and 1 classification) to work with Model development
+- All location features such as address, street, lat/long, block, trap are all duplicated, so we drop most of them and select only trap
+- Features which contain text data such as spicies and traps, so we use label code to convert them to be numerical features.
+- In conclustion, we have 36 X variables (features) and 1 Y target variable to work for model development.
 
 
 ## Modeling and result
-##### Modeling
-This is classification case, predicting the probability of label. So our group start with using 8 classification model as follow. Aiming to get the best result score to use them for futher optimization
+
+##### Selecting best model algorithm
+This is classification case, predicting the probability of label. So our group start with using 8 classification model to select the best model, and to use the best model for futher tuning
 1. Logistic Regression
 2. Decision Tree
 3. Random Forest
@@ -171,48 +171,55 @@ Here are result
 
 ![](image/result1.png)   ![](image/result2.png)
 
-We're using AUC-ROC score for evalulation. XGBoost got the best score. So we decide to pick XGBoost as the model for further hyperparameter optimization using gridsearch. After the optimization, let's check the result
+We use AUC-ROC score for evaluating th best model. XGBoost got the best score. So we decide to pick XGBoost for further tuning using gridsearch.
 
-##### Error Analysis
-Since the train data is very unbalance, so we decide to run twice, one with prepared data and another with resampling data using SMOTE method.
-The SMOTE has a better resul. And we use both models to predict and submit to kaggle. Surprisingly non-SMOTE gave a better score on Kaggle at 0.7068 and SMOTE model is 0.6778. 
+##### Selecting SMOTE vs Non-SMOTE
+Since the train data is very unbalance, so we decide to test between
+    1) model using original data (Non-SMOTE)
+    2) model with resampling data (SMOTE).
 
-To find out what kind of prediction our model has done, we use the splited test data to check the confussion matrix and the tree
+The SMOTE one has a better result while train the model. However, after using both models to predict and submit to kaggle, Non-SMOTE gave a better score on Kaggle at 0.7068, while SMOTE model is 0.6778. 
+
+##### Error Analysis to explore futher
+To find out what kind of prediction our model has done, we use the splited test data to check the confusion matrix and the tree
+
  ![](image/confuse.png)
 
-  ![](image/tree1.png)
+ ![](image/tree1.png)
 
- Sensitivity (TP/TP+FN) is not good at all, only 5%. Due to baseline, model is likely to predict mostly no WMV. This indicate the True Positive over Total actual positive case is very poor. 
+Based on confusion matrix, Sensitivity (TP/TP+FN) is low, only 5%. The result indicate that the True Positive over Total actual positive case is very poor. 
  
- Then let's check the tree. We can see that this is align with our assumption earlier that weather might have correlation, because the tree shows in the early branch of tree.
+Based on the decision treem, we see that weather have strong correlation, therefore we decide to do further feature engineering focusing on weather.
 
  
-##### Feature optimization
-From the error analysis we found that there could be a correlation between the temperature and present of virus. so let got back and check on those feature, and perform features engineering aiming to improvde the model performance. 
+##### Feature optimization after error analysis
+From the error analysis, we found that strong correlation between the temperature and the presence of virus. so we decide to add more features related weathers to improvde the performance. As a result we created 34 more features by creating the bin for each 8 Farenhiet degree of Tmax, Tmin, Tavg, and Wetbulb as features, for example, 'wetbulb_x_bin_bin8'
 
-We ending up created 34 more features from creating the bin for every 8 degree F of Tmax, Tmin, Tavg, and Wetbulb. 
-
-Let's apply selected model to these data.
-
-##### Model optimization
-
-After using new features data, the result of the model is improved. AUC-ROC of both splited train and test data of SMOTE went to 0.6. and When we made prediction and submitted to Kaggle, the result also improved. Again the non-SMOTE actually got better score than SMOTE
+##### Final model tuning
+We apply new features on XG Boost, and the results are improved. AUC-ROC of both splited train and test data of SMOTE went to 0.6 from 0.58. And after submitting to Kaggle, the results also improved as well. Again the non-SMOTE actually got better score than SMOTE
 
  ![](image/finalscore.png)
 
 
-## Conclusion
-From our result, we found that the factor that has impact on the present of the virus is likely to be weather, or to be more presice the temperature. When we focus our feature engineer on weather factor, we got a better result. We would recommend that if the City is to plan pesticide spraying, they should concentrate to do it during summer and perhaps change the pesticide, because from spray data, it doesn't look very effective.
+#### Final model limitation
+1) the pesticide spraying is not effective because it was done faraway from Trap especially, so the pray data is not usable.
+2) the train data is highly imbalance; the imbalance impact the prediction result.
+3) the train data is not continuous from year to year; we should have continous yearly data instead.
+4) the test data lack WnvPresent data; and the lack of this data make us unable to generate spatial feature such as
+       - Distance between trap and WnvPresnt
+       - Count of WnvPresent in xx KM during last xx days
 
-#### Limitation
-We concern about the impact of pesticide spray that it not effective. But we're not sure yet, because it might be that spray was done further from Trap, so we didn't detect any effect of spray. Perhaps more data on spray would prove otherwise. Also the train data was strongly imbalance, where the test baseline shows very well balance case. 
 
-#### Cost and Benefit analysis
-##### WNV control with machine learning  
+## Conclusion & Recommendation
 
-The Illinois Department of Public Health (IDPH) encourages the public to Fight the Bite by practicing the three “R’s” – reduce, repel, and report:
+### Predictor
+In conclusion, weather, especially temperature, are the strongest predictors for virus presence. 
 
-REPORT: we can use our prediction to check predictted locations where you see water sitting stagnant for more than a week such as roadside ditches, flooded yards, and similar locations that may produce mosquitoes.  
+### Wnv control plan based on our model prediction
+
+The city should encourages practicing the three “R’s” – reduce, repel, and report based on our model prediction.
+
+REPORT: we can use our prediction to check predicted locations where you see water sitting stagnant for more than a week such as roadside ditches, flooded yards, and similar locations that may produce mosquitoes.  
 
 REDUCE: we can use our prediction to make sure that in the predicted areas ...
             - sprays are used preventively 
@@ -220,9 +227,11 @@ REDUCE: we can use our prediction to make sure that in the predicted areas ...
             - doors and windows are shut
             - all sources of standing water where mosquitoes can breed, including water in bird baths, ponds, flowerpots, wading pools, old tires, and any other containers are taken care of
 
-REPEL: we can use our prediction to make sure that in the resident in the predicted areas wear shoes and socks, long pants and a light-colored, long-sleeved shirt, and apply an EPA-registered insect repellent that contains DEET, picaridin, oil of lemon eucalyptus, IR 3535, para-menthane-diol (PMD), or 2-undecanone according to label instructions.  Consult a physician before using repellents on infants.
+REPEL: we can use our prediction to make sure that in the residents in the predicted areas wear shoes and socks, long pants and a light-colored, long-sleeved shirt, and apply an EPA-registered insect repellent that contains DEET, picaridin, oil of lemon eucalyptus, IR 3535, para-menthane-diol (PMD), or 2-undecanone according to label instructions.  Consult a physician before using repellents on infants.
 
-##### Benefits:
+### Cost and benefit analysis of Wnv control plan based on our model prediction
+
+#### Benefits:
 
 The benefits of using machine learning to control West Nile virus (WNV) control for the government of Chicago, Illinois are numerous and far-reaching. By implementing machine learning, we can be more effectively control WNV, and the city can significantly reduce the risk of WNV transmission, protect the health of its residents, and save money in the long run.
 
@@ -235,7 +244,7 @@ The benefits of using machine learning to control West Nile virus (WNV) control 
 
 - Using machine learning to predict where and when also can control WNV outbreaks which have a significant economic impact on a city. In addition to the direct costs of medical care, WNV can also lead to lost productivity, decreased tourism, and increased anxiety among residents. By preventing WNV outbreaks, the city can save money and help to keep its economy strong.
 
-##### Cost: 
+#### Cost: 
  The possible cost includes increasing the following activities to ensure that we include the areas by machine learning
     - purchasing and applying larvicide,
     - working with local municipal governments and local news media for WNV prevention and education, 
