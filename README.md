@@ -182,7 +182,7 @@ To find out what kind of prediction our model has done, we use the splited test 
 
   ![](image/tree1.png)
 
- Sensitivity (TP/TP+FN) is not good at all, only 5%. Due to baseline, model is likely to predict mostly no WMV. The AUC-ROC is also at 0.53. Both of them indicate the True Positive over Total actual positive case is very poor. 
+ Sensitivity (TP/TP+FN) is not good at all, only 5%. Due to baseline, model is likely to predict mostly no WMV. This indicate the True Positive over Total actual positive case is very poor. 
  
  Then let's check the tree. We can see that this is align with our assumption earlier that weather might have correlation, because the tree shows in the early branch of tree.
 
