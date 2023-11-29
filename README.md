@@ -93,43 +93,45 @@ Longitude| Longitude where spray
 
 
 ## Exploratory Data Analysis and Data pre-processing
-##### Check data correction and readiness
-- Only feature "time" in spray data contains "null" value. Since there is no time record in other dataset. So, consider drop this feature
-- The spray record contain data in year 2011, 2013. But test data has no record in those 2 years. So cosider not using spray data for now.
-- Check duplicate data in all dataset, and found duplicated data in Train data. So drop the duplicate from dataset
-- Weather data has no "null" value, but vitually, we see blank and missing data. Replace them with "null" before consider dropping them
-![](image/weather_missing.png)
-- There are total less than 400 record with replaced null value, out of total 2944 record in weather. This is about 20%, so cosider to drop them.
-- convert all data in weather to integer or float
-- drop Codesum column, on the assumption that this is tornado warning, this not happen very frequent in Chicago.
-- There are 2 station, split them form another set of features. This is to expand the features in order to increase the variance for better prediction when develop the model
-- Merge weather with train and test data
-- convert and split datetime to year, month, day for both data set
-- We are not have 2 data set intead of 4. 1 of 2 is train data and another is test data (to be used for prediction submission)
 
-##### EDA
+##### Check and clean the data
+- Only feature "time" in spray data contains "null" value. Since there is no time record in other dataset. So, consider drop this feature.
+- The spray record contain data in year 2011, 2013. But test data has no record in those 2 years. So consider not using spray data for now.
+- We check the duplicated data in all dataset, and found duplicated data in Train data. So drop the duplicate from dataset.
+- Weather data has no "null" value, but virtually, we see blank and missing data; so we consider replacing them with "null".
+![](image/weather_missing.png)
+- There are total less than 400 record with replaced null value, out of total 2944 record in weather. This is about 20%, so we consider dropping them.
+- We, then, convert all data in weather data set to integer or float.
+- We also drop 'Codesum' column, on the assumption that this is tornado warning, this not happen very frequent in Chicago.
+- There are 2 stations; Since both station class has about the same record and we don't know the location of each station. we split both and re-merge them together with date increase the variance for better prediction when develop the model.
+- We, then, merge weather with train and test data.
+- we, then convert and split datetime to year, month, day for both data set.
+- We, finally, have 2 data set. one is train data and another one is test data (to be used for prediction submission).
+
+##### EDA the data
 - Let's check if there is any correlation between data
 
 ![](image/heatmap.png)
 ![](image/heatmap2.png)
 
-There are no significant correlation between WnvPresent, Nummosquitos and other datas. The correlation only occur amoung weather data. Which is common.
+- High correlation occur among weather data; this high correlation show the sign of multicollinearity.
+- The month data, temperature related data, location related such as lat/long has notable correlation with WnvPresent.
 
 - Check the present of virus across each month of year and each year of record
 ![](image/present_month.png)
 ![](image/present_year.png)
 
-This is clear than the virus is likely to be found during summer. This is likely that it might related to temperature. So let check the present of virus against Temperature
+It is clear that the virus is likely to be found during summer. It is likely that it might related to temperature. So let's check the presence of virus against temperature.
 ![](image/temp.png)
 
-This is align with previous finding. The virus is likely to be found in the higher temperature
+This is align with previous finding. The virus is likely to be found in the higher temperature.
 
-- Next, let's check if there is any significant of the location across Chicago
+- Next, let's check if there is any significant of the location across Chicago.
 ![](image/map.png)
 
-Some area may have more present that other, but it look evenly spread across city.
+- Some areas may have more presence than other, but it look evenly spread across city.
 
-- Eventhought Spray data doesn't look useful, but let's check them for certian. Check if there is any impact from spray
+- Eventhough Spray data doesn't look useful, but let's check them for certian. Check if there is any impact from spray
 ![](image/spray_month.png)
 
 The spray was done in 2011 and 2013. The graph shows that in 2013, the virus present is the highest. The spray not working or did they spray in the wrong place.
@@ -138,32 +140,34 @@ The spray was done in 2011 and 2013. The graph shows that in 2013, the virus pre
 
 We do the calculation to find the distance (in kilometer) from the spray lat/long to the closest trap. The result in the above graph shows that the spray location is further away range from 1 - 40 km away. So this might be a reason why the spray didn't work.
 
+##### EDA Summary
+- For train data, the baseline score is 5% Present (virus found) and 95% Non-present (virus not found); therefore train data is very imbalance; we will do the oversampling with SMOTE technique later in the modeling.
+- For spray data, we  will not use it because it is not reliable.
+- For weather data, we will merge it with train data because the weather data, especially temperature, appear to be strong predictors.
 
-
-##### Summary of EDA
-- In train data, the baseline score is 5% Present (virus found) and 95% Non-present (virus not found). This is very unbalance train data
-- The correlation between most individual features and WnvPresent are quite minimal. 
-- The strong predictors are weather related feaatures, so let's select features heavily rely on weather features
-- Geolocation such as Trap, Block, Address, Street, lat/long correlation to WnvPresent is unclear.
-- The Virus is likely to be found during Jun - Oct. The highest is Aug. 
-- The virus is likely to be found in the higher temperature
-
-##### Data preparation for model development
-- All location features such as address, street, lat/long, block, trap are all duplicated, so we drop most of them and select only trap
-- Features which contain text data such as spicies and traps, so we use label code to convert them to be numerical features.
+##### As a result of EDA, Data preprocessed for model development
+- For features that contain text such as spicies and traps, we will use label code to convert them to be numerical features.
 - In conclustion, we have 36 X variables (features) and 1 Y target variable to work for model development.
-
+- 36 X variables includes 
+       'Species', 'Block', 'Street', 'Trap', 'Latitude', 'Longitude',
+       'AddressAccuracy', 'WnvPresent', 'Tmax_x', 'Tmin_x', 'Tavg_x',
+       'DewPoint_x', 'WetBulb_x', 'Heat_x', 'Cool_x', 'PrecipTotal_x',
+       'StnPressure_x', 'SeaLevel_x', 'ResultSpeed_x', 'ResultDir_x',
+       'AvgSpeed_x', 'Tmax_y', 'Tmin_y', 'Tavg_y', 'DewPoint_y', 'WetBulb_y',
+       'Heat_y', 'Cool_y', 'PrecipTotal_y', 'StnPressure_y', 'SeaLevel_y',
+       'ResultSpeed_y', 'ResultDir_y', 'AvgSpeed_y', 'day', 'month', 'year'
+- 1 Y variable is 'WnvPresent'
 
 ## Modeling and result
 
 ##### Selecting best model algorithm
-This is classification case, predicting the probability of label. So our group start with using 8 classification model to select the best model, and to use the best model for futher tuning
+This is classification case, predicting the probability of label. So our group start with using 7 classification models to select the best model, and to use this best model for futher tuning
 1. Logistic Regression
 2. Decision Tree
 3. Random Forest
 4. AdaBoost
-5. Gradient Boosting
-6. Bagged Decision Tree
+5. Bagged Decision Tree
+6. Gradient Boosting
 7. SVM
 8. XGBoost
 
@@ -174,14 +178,14 @@ Here are result
 We use AUC-ROC score for evaluating th best model. XGBoost got the best score. So we decide to pick XGBoost for further tuning using gridsearch.
 
 ##### Selecting SMOTE vs Non-SMOTE
-Since the train data is very unbalance, so we decide to test between
+Since the train data is very imbalance, so we decide to test between
     1) model using original data (Non-SMOTE)
     2) model with resampling data (SMOTE).
 
-The SMOTE one has a better result while train the model. However, after using both models to predict and submit to kaggle, Non-SMOTE gave a better score on Kaggle at 0.7068, while SMOTE model is 0.6778. 
+The SMOTE one has a better result while train the model.
 
-##### Error Analysis to explore futher
-To find out what kind of prediction our model has done, we use the splited test data to check the confusion matrix and the tree
+##### Feature Importance Analysis to explore futher
+To find out what kind of prediction our model has done, we check the confusion matrix and the decision tree.
 
  ![](image/confuse.png)
 
@@ -189,20 +193,18 @@ To find out what kind of prediction our model has done, we use the splited test 
 
 Based on confusion matrix, Sensitivity (TP/TP+FN) is low, only 5%. The result indicate that the True Positive over Total actual positive case is very poor. 
  
-Based on the decision treem, we see that weather have strong correlation, therefore we decide to do further feature engineering focusing on weather.
+Based on the decision tree, we see that month, latitude, and temperature have strong impact, and we decide to do further feature engineering  on temperature.
 
- 
-##### Feature optimization after error analysis
-From the error analysis, we found that strong correlation between the temperature and the presence of virus. so we decide to add more features related weathers to improvde the performance. As a result we created 34 more features by creating the bin for each 8 Farenhiet degree of Tmax, Tmin, Tavg, and Wetbulb as features, for example, 'wetbulb_x_bin_bin8'
+As a result we created 34 more features by creating the bin for each 8 Farenhiet degree of Tmax, Tmin, Tavg, and Wetbulb as features, for example, 'wetbulb_x_bin_bin8'
 
 ##### Final model tuning
-We apply new features on XG Boost, and the results are improved. AUC-ROC of both splited train and test data of SMOTE went to 0.6 from 0.58. And after submitting to Kaggle, the results also improved as well. Again the non-SMOTE actually got better score than SMOTE
+With additionl features which apply XG Boost, the results improved. Again the non-SMOTE actually got better score than SMOTE.
 
  ![](image/finalscore.png)
 
 
-#### Final model limitation
-1) the pesticide spraying is not effective because it was done faraway from Trap especially, so the pray data is not usable.
+#### the model challenges and limitation
+1) the pesticide spraying is not effective because it was done faraway from Trap especially, so the spray data is not usable.
 2) the train data is highly imbalance; the imbalance impact the prediction result.
 3) the train data is not continuous from year to year; we should have continous yearly data instead.
 4) the test data lack WnvPresent data; and the lack of this data make us unable to generate spatial feature such as
@@ -212,49 +214,63 @@ We apply new features on XG Boost, and the results are improved. AUC-ROC of both
 
 ## Conclusion & Recommendation
 
-### Predictor
-In conclusion, weather, especially temperature, are the strongest predictors for virus presence. 
+### Predictors
+In conclusion, month, latitude, and temperature, are the strongest predictors for virus presence. 
 
 ### Wnv control plan based on our model prediction
-
 The city should encourages practicing the three “R’s” – reduce, repel, and report based on our model prediction.
 
-REPORT: we can use our prediction to check predicted locations where you see water sitting stagnant for more than a week such as roadside ditches, flooded yards, and similar locations that may produce mosquitoes.  
+REPORT: 
+we can use our prediction to check predicted locations where you see water sitting stagnant for more than a week such as roadside ditches, flooded yards, and similar locations that may produce mosquitoes.  
 
-REDUCE: we can use our prediction to make sure that in the predicted areas ...
+REDUCE: 
+we can use our prediction to make sure that in the predicted areas ...
+
             - sprays are used preventively 
             - doors and windows have tight-fitting screens, and be repaired or replaced for those that have tears or other openings 
             - doors and windows are shut
-            - all sources of standing water where mosquitoes can breed, including water in bird baths, ponds, flowerpots, wading pools, old tires, and any other containers are taken care of
+            - all sources of standing water where mosquitoes can breed
 
-REPEL: we can use our prediction to make sure that in the residents in the predicted areas wear shoes and socks, long pants and a light-colored, long-sleeved shirt, and apply an EPA-registered insect repellent that contains DEET, picaridin, oil of lemon eucalyptus, IR 3535, para-menthane-diol (PMD), or 2-undecanone according to label instructions.  Consult a physician before using repellents on infants.
+REPEL: 
+we can use our prediction to make sure that in the residents in the predicted areas wear shoes and socks, long pants and a light-colored, long-sleeved shirt, and apply an EPA-registered insect repellent that contains DEET, picaridin, oil of lemon eucalyptus, IR 3535, para-menthane-diol (PMD), or 2-undecanone according to label instructions.  Consult a physician before using repellents on infants.
+
+Source: https://dph.illinois.gov/resource-center/news/2023/june/west-nile-virus-reported-in-four-illinois-counties-so-far-in-202.html
 
 ### Cost and benefit analysis of Wnv control plan based on our model prediction
 
 #### Benefits:
-
 The benefits of using machine learning to control West Nile virus (WNV) control for the government of Chicago, Illinois are numerous and far-reaching. By implementing machine learning, we can be more effectively control WNV, and the city can significantly reduce the risk of WNV transmission, protect the health of its residents, and save money in the long run.
 
 ##### 1) Improve the Public Health: 
-
 - Based on statistics in 2022, there were 34 human cases (which are significantly under-reported) and 8 deaths attributed to the disease in the state in 2022, the most in any year since 2018, when there were 17 deaths.
 - Using machine learning to predict where and when can reduce the number of WNV cases, and the city can prevent serious illness, hospitalization, and even death. This has a direct impact on the quality of life of Chicago residents and can help to reduce the overall burden on the healthcare system.
 
-##### 2) Reduce the indirect Economic Costs: 
+Source: https://dph.illinois.gov/resource-center/news/2023/june/west-nile-virus-reported-in-four-illinois-counties-so-far-in-202.html
 
+##### 2) Reduce the indirect Economic Costs: 
 - Using machine learning to predict where and when also can control WNV outbreaks which have a significant economic impact on a city. In addition to the direct costs of medical care, WNV can also lead to lost productivity, decreased tourism, and increased anxiety among residents. By preventing WNV outbreaks, the city can save money and help to keep its economy strong.
 
-#### Cost: 
- The possible cost includes increasing the following activities to ensure that we include the areas by machine learning
-    - purchasing and applying larvicide,
-    - working with local municipal governments and local news media for WNV prevention and education, 
-    - investigating mosquito production sites and nuisance mosquito complaints. 
-    - collecting mosquitoes for West Nile virus testing and also collect sick or dead birds for West Nile virus testing.
+#### Possible Cost : 
+   - purchasing and applying larvicide in the predicted areas: 
+             149,533.65 USD
+    - working with local municipal governments and local news media for WNV prevention and education: 
+            0 USDs (remark: we will do it anyway)
+    - investigating mosquito production sites and nuisance mosquito complaints on the predicted site: 
+            0 USDs (remark: use local resources) 
+    - collecting mosquitoes for West Nile virus testing and also collect sick or dead birds for West Nile virus testing:
+            0 USDs (remark: use local resources)
 
+####  Cost Calculation: 
+Total size of Chicago area is 28,120 km square
+Total size of Wnv presence in Chicago area is 1,665 km square based on using predictive modeling on test data (Remark: assuming that 1 trap which we track WnvPresent cover 1 km square)
+Cost of mosquito repellant per 1 km square is 89.81 USD (Remark: assuming that 12 bottles of "Repel 33801-1 Sportsmen Max Insect 6.5-oz Aerosol 40% DEET" cover 1 km square area) 
+Cost of mosquito repellant for predicted area (1,665 km square) = 149,533.65 USD 
+Cost of total Chicago area (28,120 km square) = 2,302,747 USD
+We can save cost of applying larvicide by 2,302,747 USD - 149,533.65 USD = 2,153,213.35 USD
 
-
-
-
+Source:
+https://en.wikipedia.org/wiki/Chicago_metropolitan_area
+https://www.amazon.com/Repel-33801-Sportsmen-Repellent-40-Percent/dp/B008H5B9UK/ref=sr_1_2?crid=26F23KCJIK9J4&keywords=mosquito%2Brepellent%2Bspray%2Blarge%2Bsize&qid=1701148171&sprefix=mosquito%2Brepellent%2Bspray%2Blarge%2Bsiz%2Caps%2C347&sr=8-2&th=1
 
 
 
